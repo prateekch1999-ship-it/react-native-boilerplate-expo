@@ -1,0 +1,42 @@
+# The checks RULES.md asks for before a commit, run again where --no-verify
+# cannot reach them. Husky is local only; this is the copy that gates a merge.
+name: verify
+
+on:
+  pull_request:
+    branches: [development, main]
+  # Also on the branch itself, so a merge that breaks the build says so even
+  # though every PR into it was green.
+  push:
+    branches: [development, main]
+
+# A newer push to the same branch makes this run's answer obsolete.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The dev server writes expo-env.d.ts, and the file says it belongs in
+      # .gitignore — so a fresh clone has no reference to expo/types and `tsc`
+      # here would not see what `tsc` on a laptop sees. An asset or env import
+      # would then typecheck locally and fail only in CI. Expo writes exactly
+      # this line; writing it ourselves makes the two checks the same check.
+      - run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
+
+      # Formatting is not part of `verify` because husky's lint-staged fixes it
+      # on the way in. Nothing server-side checked it until here.
+      - run: npm run format:check
+
+      - run: npm run verify

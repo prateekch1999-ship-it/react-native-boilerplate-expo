@@ -1,0 +1,6 @@
+# Lint + format staged files, then check the whole project.
+# Both whole-project checks take ~1s each today; move them to a pre-push hook
+# if the suite ever grows slow enough to be felt.
+npx lint-staged
+npx tsc --noEmit
+npm test --silent

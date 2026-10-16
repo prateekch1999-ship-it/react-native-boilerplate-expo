@@ -1,0 +1,11 @@
+# Conventional commits — see RULES.md. Merge and revert commits pass through.
+grep -qE '^(Merge|Revert)' "$1" && exit 0
+
+grep -qE '^(feat|fix|refactor|docs|test|chore|perf|ci)(\([a-z0-9._-]+\))?!?: .+' "$1" && exit 0
+
+cat >&2 <<'MSG'
+✗ Commit message must be conventional: <type>(<optional scope>): <description>
+  types: feat fix refactor docs test chore perf ci
+  e.g.  feat(orders): add repeat-order button
+MSG
+exit 1
